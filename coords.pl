@@ -44,10 +44,13 @@ foreach my $portal_data ( @all_portal_data ) {
       or die "unable to parse portal data";
     my ($lat, $long, $name, $address) = ($1, $2, $3, $4);
 
-    # Notice the 90 - latitude: phi zero is at the North Pole.
-    my @L = (deg2rad($long),        deg2rad(90 - $lat));
-    my @T = (deg2rad($long_centre), deg2rad(90 - $lat_centre));
-    my $distance = round( great_circle_distance(@L, @T, 6378 * 1000) ); # equatorial radius of 6378 km
+    my $distance;
+    if ( $long_centre && $lat_centre ) {
+        # Notice the 90 - latitude: phi zero is at the North Pole.
+        my @L = (deg2rad($long),        deg2rad(90 - $lat));
+        my @T = (deg2rad($long_centre), deg2rad(90 - $lat_centre));
+        $distance = round( great_circle_distance(@L, @T, 6378 * 1000) ); # equatorial radius of 6378 km
+    }
 
     my $identifier = join('', split('\.', $lat)).join('', split('\.', $long));
 
@@ -57,7 +60,7 @@ foreach my $portal_data ( @all_portal_data ) {
         name     => $name,
         address  => $address,
         distance => $distance,
-    } if $distance < $radius;
+    } if !$distance || ($distance && $distance < $radius);
 }
 
 my $ordered = [
