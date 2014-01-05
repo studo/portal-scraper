@@ -32,21 +32,25 @@ my $document = do {
 
 ## $document
 
-my @all_portal_data = $document =~ m{<div class="pl_content pl_broad">(.*?)</div>}gs;
+my @all_portal_data = $document =~ m{<tr class="(?:res|enl|neutral)">(.*?)</tr>}gs;
 
 ### found: scalar(@all_portal_data) . " entries"
 
 my $portals = {};
 
+my $longest_name = 0;
 foreach my $portal_data ( @all_portal_data ) {
     ## $portal_data
-    $portal_data =~ m{data-plat="(.*?)" data-plng="(.*?)">(.*?)</span>.*?\((.*?)\)}gs
+    #$portal_data =~ m{data-plat="(.*?)" data-plng="(.*?)">(.*?)</span>.*?\((.*?)\)}gs
+    $portal_data =~ m{<a\sondblclick="window\.zoomToAndShowPortal\('.*?',\s\[(.*?),(.*?)\]\);return\sfalse"\sonclick="window\.renderPortalDetails\('.*?'\);return\sfalse"\shref=".*?"\stitle=".*?">(.*?)</a>}gs
       or die "unable to parse portal data";
-    my ($lat, $long, $name, $address) = ($1, $2, $3, $4);
+    my ($lat, $long, $name) = ($1, $2, $3);
+
+    $longest_name = length($name) if length($name) > $longest_name;
 
     my $distance;
     if ( $long_centre && $lat_centre ) {
-        # Notice the 90 - latitude: phi zero is at the North Pole.
+        # Notice the 90 - latitude: phi zero is at the North Pole\s
         my @L = (deg2rad($long),        deg2rad(90 - $lat));
         my @T = (deg2rad($long_centre), deg2rad(90 - $lat_centre));
         $distance = round( great_circle_distance(@L, @T, 6378 * 1000) ); # equatorial radius of 6378 km
@@ -58,7 +62,6 @@ foreach my $portal_data ( @all_portal_data ) {
         lat      => $lat,
         long     => $long,
         name     => $name,
-        address  => $address,
         distance => $distance,
     } if !$distance || ($distance && $distance < $radius);
 }
@@ -74,12 +77,13 @@ my $ordered = [
 ### found: scalar(keys %{$portals}) . " portals"
 
 ### --------------------------------
+$longest_name++; $longest_name++;
 foreach my $portal (@{$ordered}) {
-    print join('', split('\.', $portal->{name})); print ", ";
+    printf "%-${longest_name}s", $portal->{name}.',';
     printf '%f', $portal->{lat};
     print ", "; printf '%f', $portal->{long};
     print ", $keys"; # for maxfield script
-    print ", ". $portal->{distance}."m" if $distance; 
+    print ", ". $portal->{distance}."m" if $distance;
     print "\n";
 }
 
