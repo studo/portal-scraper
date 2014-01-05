@@ -10,14 +10,14 @@ use Math::Round;
 use Smart::Comments;
 use YAML;
 
-my ($file, $lat_centre, $long_centre, $radius, $distance, $keys) = (undef, undef, undef, undef, undef, 2);
+my ($file, $lat_centre, $long_centre, $radius, $distance, $maxfield) = (undef, undef, undef, undef, undef, undef);
 GetOptions(
     "file=s"        => \$file,
     "lat-centre=f"  => \$lat_centre,
     "long-centre=f" => \$long_centre,
     "radius=i"      => \$radius,
     "distance"      => \$distance,
-    "keys=i"        => \$keys,
+    "maxfield"      => \$maxfield,
 );
 
 ### centre lat: $lat_centre
@@ -46,8 +46,6 @@ foreach my $portal_data ( @all_portal_data ) {
       or die "unable to parse portal data";
     my ($lat, $long, $name) = ($1, $2, $3);
 
-    $longest_name = length($name) if length($name) > $longest_name;
-
     my $distance;
     if ( $long_centre && $lat_centre ) {
         # Notice the 90 - latitude: phi zero is at the North Pole\s
@@ -56,14 +54,33 @@ foreach my $portal_data ( @all_portal_data ) {
         $distance = round( great_circle_distance(@L, @T, 6378 * 1000) ); # equatorial radius of 6378 km
     }
 
-    my $identifier = join('', split('\.', $lat)).join('', split('\.', $long));
+    if ($maxfield) {
+        $name = join('', split('\.', $name));
+        $lat  = join('', split('\.', $lat));
+        my $lat_length = length $lat;
+        my $lat_missing = 8 - $lat_length;
+        while ( $lat_missing > 0 ) {
+            $lat = $lat * 10;
+            $lat_missing--;
+        }
+        $long = join('', split('\.', $long));
+        my $long_length = length $long;
+        my $long_missing = 8 - $long_length;
+        while ( $long_missing > 0 ) {
+            $long = $long * 10;
+            $long_missing--;
+        }
+    }
 
+    my $identifier = join('', split('\.', $lat)).join('', split('\.', $long));
     $portals->{$identifier} = {
         lat      => $lat,
         long     => $long,
         name     => $name,
         distance => $distance,
     } if !$distance || ($distance && $distance < $radius);
+
+    $longest_name = length($name) if length($name) > $longest_name;
 }
 
 my $ordered = [
@@ -80,11 +97,13 @@ my $ordered = [
 $longest_name++; $longest_name++;
 foreach my $portal (@{$ordered}) {
     printf "%-${longest_name}s", $portal->{name}.',';
-    printf '%f', $portal->{lat};
-    print ", "; printf '%f', $portal->{long};
-    print ", $keys"; # for maxfield script
+    if ($maxfield) {
+        print $portal->{lat}, ', ', $portal->{long};
+    }
+    else {
+        printf '%f, %f', $portal->{lat}, $portal->{long};
+    }
+    print ", 0" if $maxfield;
     print ", ". $portal->{distance}."m" if $distance;
     print "\n";
 }
-
-
