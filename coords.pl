@@ -55,7 +55,7 @@ foreach my $portal_data ( @all_portal_data ) {
     }
 
     if ($maxfield) {
-        $name = join('', split('\.', $name));
+        $name = join('', split('\.|,', $name));
         $lat  = join('', split('\.', $lat));
         my $lat_length = length $lat;
         my $lat_missing = 8 - $lat_length;
