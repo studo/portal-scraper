@@ -41,8 +41,7 @@ my $portals = {};
 my $longest_name = 0;
 foreach my $portal_data ( @all_portal_data ) {
     ## $portal_data
-    #$portal_data =~ m{data-plat="(.*?)" data-plng="(.*?)">(.*?)</span>.*?\((.*?)\)}gs
-    $portal_data =~ m{<a\sondblclick="window\.zoomToAndShowPortal\('.*?',\s\[(.*?),(.*?)\]\);return\sfalse"\sonclick="window\.renderPortalDetails\('.*?'\);return\sfalse"\shref=".*?"\stitle=".*?">(.*?)</a>}gs
+    $portal_data =~ m{<a\sondblclick="window\.zoomToAndShowPortal\('.*?',\s\[(.*?),(.*?)\]\);return\sfalse"\sonclick="window\.renderPortalDetails\('.*?'\);return\sfalse"\shref=".*?">(.*?)</a>}gs
       or die "unable to parse portal data";
     my ($lat, $long, $name) = ($1, $2, $3);
 
@@ -55,7 +54,7 @@ foreach my $portal_data ( @all_portal_data ) {
     }
 
     if ($maxfield) {
-        $name = join('', split('\.', $name));
+        $name = join('', split('\.|,', $name));
         $lat  = join('', split('\.', $lat));
         my $lat_length = length $lat;
         my $lat_missing = 8 - $lat_length;
