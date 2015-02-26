@@ -32,7 +32,7 @@ my $document = do {
 
 ## $document
 
-my @all_portal_data = $document =~ m{<tr class="(?:res|enl|neutral)">(.*?)</tr>}gs;
+my @all_portal_data = $document =~ m{<tr class="(?:res|enl|none)">(.*?)</tr>}gs;
 
 ### found: scalar(@all_portal_data) . " entries"
 
@@ -41,7 +41,8 @@ my $portals = {};
 my $longest_name = 0;
 foreach my $portal_data ( @all_portal_data ) {
     ## $portal_data
-    $portal_data =~ m{<a\sondblclick="window\.zoomToAndShowPortal\('.*?',\s\[(.*?),(.*?)\]\);return\sfalse"\sonclick="window\.renderPortalDetails\('.*?'\);return\sfalse"\shref=".*?">(.*?)</a>}gs
+    #$portal_data =~ m{<a\sondblclick="window\.zoomToAndShowPortal\('.*?',\s\[(.*?),(.*?)\]\);return\sfalse"\sonclick="window\.renderPortalDetails\('.*?'\);return\sfalse"\shref=".*?">(.*?)</a>}gs
+    $portal_data =~ m{<td\sclass="alignR">.*?</td><td\sclass="portalTitle"><a href="/intel\?ll=(.*?),(.*?)&amp;z=.*?&amp;pll=.*?,.*?">(.*?)</a>}gs
       or die "unable to parse portal data";
     my ($lat, $long, $name) = ($1, $2, $3);
 
